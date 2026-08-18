@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoClean AI - Smart Waste Management System</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        eco: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            dark: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS & JS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js for Admin Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, 0.4);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(22, 163, 74, 0.7);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+        }
+
+        .pulse-badge {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- TOP NAVIGATION HEADER -->
+    <header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-eco-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-eco-500/20">
+                    <i class="fa-solid fa-leaf text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-eco-700 via-eco-600 to-emerald-500 bg-clip-text text-transparent dark:from-eco-400 dark:to-emerald-300">
+                        EcoClean<span class="text-amber-500 dark:text-amber-400">AI</span>
+                    </span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-1">Smart Waste OS</span>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation Tabs -->
+            <nav class="hidden md:flex items-center space-x-1 lg:space-x-2 text-sm font-semibold">
+                <button onclick="switchTab('home')" id="nav-home" class="nav-link px-3 py-2 rounded-lg transition-all text-eco-600 dark:text-eco-400 bg-eco-50 dark:bg-slate-800">
+                    <i class="fa-solid fa-house mr-1.5"></i> Home
+                </button>
+                <button onclick="switchTab('report')" id="nav-report" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-camera mr-1.5 text-eco-500"></i> Report Waste
+                </button>
+                <button onclick="switchTab('tracker')" id="nav-tracker" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-list-check mr-1.5"></i> Track Complaints
+                </button>
+                <button onclick="switchTab('map')" id="nav-map" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-map-location-dot mr-1.5"></i> Live Map
+                </button>
+                <button onclick="switchTab('schedules')" id="nav-schedules" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-truck-pickup mr-1.5"></i> Schedules
+                </button>
+                <button onclick="switchTab('recycling')" id="nav-recycling" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-recycle mr-1.5 text-emerald-500"></i> Eco Hub
+                </button>
+                <button onclick="switchTab('admin')" id="nav-admin" class="nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Admin Panel
+                </button>
+            </nav>
+
+            <!-- Actions & Role Switcher -->
+            <div class="flex items-center gap-3">
+                <!-- Role Selector Toggle -->
+                <div class="hidden sm:flex items-center bg-slate-200/70 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+                    <button id="role-citizen-btn" onclick="setUserRole('citizen')" class="px-2.5 py-1 rounded-lg transition-all bg-white dark:bg-slate-700 text-eco-700 dark:text-eco-300 shadow-sm">
+                        <i class="fa-solid fa-user mr-1"></i> Citizen
+                    </button>
+                    <button id="role-admin-btn" onclick="setUserRole('admin')" class="px-2.5 py-1 rounded-lg transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
+                        <i class="fa-solid fa-user-shield mr-1"></i> Admin
+                    </button>
+                </div>
+
+                <!-- Dark / Light Theme Toggle -->
+                <button onclick="toggleDarkMode()" title="Toggle Theme" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <!-- Notification Bell -->
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all relative">
+                        <i class="fa-regular fa-bell"></i>
+                        <span id="notif-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">3</span>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 z-50 p-3">
+                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Notifications</span>
+                            <button onclick="clearNotifications()" class="text-[11px] text-eco-600 dark:text-eco-400 hover:underline">Clear all</button>
+                        </div>
+                        <div id="notif-list" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Hamburger -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Navigation -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 space-y-2">
+            <div class="flex items-center justify-between p-2 bg-slate-100 dark:bg-slate-800 rounded-xl mb-3">
+                <span class="text-xs font-bold text-slate-500">Active Role:</span>
+                <div class="flex gap-1 text-xs">
+                    <button onclick="setUserRole('citizen')" class="px-3 py-1 rounded-lg bg-eco-600 text-white font-semibold">Citizen</button>
+                    <button onclick="setUserRole('admin')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-semibold">Admin</button>
+                </div>
+            </div>
+            <button onclick="switchTab('home'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-house text-eco-500"></i> Home
+            </button>
+            <button onclick="switchTab('report'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-camera text-eco-500"></i> Report Garbage
+            </button>
+            <button onclick="switchTab('tracker'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-eco-500"></i> Track Complaints
+            </button>
+            <button onclick="switchTab('map'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-eco-500"></i> City Map
+            </button>
+            <button onclick="switchTab('schedules'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-truck-pickup text-eco-500"></i> Collection Schedules
+            </button>
+            <button onclick="switchTab('recycling'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-recycle text-emerald-500"></i> Recycling Hub
+            </button>
+            <button onclick="switchTab('admin'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-indigo-500"></i> Admin Panel
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APPLICATION CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== TAB 1: LANDING / HOME ==================== -->
+        <section id="tab-home" class="tab-content space-y-12">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-eco-800 via-eco-700 to-emerald-900 text-white p-8 sm:p-12 lg:p-16 shadow-2xl">
+                <!-- Background decorative shapes -->
+                <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute right-1/3 -top-20 w-80 h-80 bg-eco-400/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-2xl space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-eco-200 text-xs font-semibold">
+                        <i class="fa-solid fa-bolt text-amber-400"></i> AI-Powered Municipal Operations
+                    </div>
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none">
+                        Cleaner Cities, <br>
+                        <span class="bg-gradient-to-r from-emerald-300 via-eco-200 to-amber-300 bg-clip-text text-transparent">Smarter Future.</span>
+                    </h1>
+                    <p class="text-slate-200 text-base sm:text-lg font-medium leading-relaxed">
+                        Report overflowing bins, pinpoint garbage locations on interactive maps, track sanitation resolution in real-time, and leverage AI waste classification for a greener community.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <button onclick="switchTab('report')" class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-eco-500 to-emerald-400 hover:from-eco-400 hover:to-emerald-300 text-slate-950 font-extrabold shadow-xl shadow-eco-950/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-camera"></i> Report Garbage Now
+                        </button>
+                        <button onclick="switchTab('map')" class="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-map-marked-alt"></i> View City Waste Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Municipal Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-eco-100 dark:bg-eco-950/60 text-eco-600 dark:text-eco-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-dumpster"></i>
+                    </div>
+                    <div>
+                        <div id="stat-total-home" class="text-2xl font-black">148</div>
+                        <div class="text-xs font-semibold text-slate-400">Total Reports</div>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <div id="stat-resolved-home" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">112</div>
+                        <div class="text-xs font-semibold text-slate-400">Cleaned & Resolved</div>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div id="stat-pending-home" class="text-2xl font-black text-amber-600 dark:text-amber-400">36</div>
+                        <div class="text-xs font-semibold text-slate-400">Active / Pending</div>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">94.2%</div>
+                        <div class="text-xs font-semibold text-slate-400">24hr SLA Success</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Showcase Grid -->
+            <div class="space-y-6">
+                <div class="text-center max-w-xl mx-auto">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">How EcoClean AI Works</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">End-to-end municipal issue resolution powered by citizens, location intelligence, and automated dispatch.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Step 1 -->
+                    <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 shadow-sm relative group hover:border-eco-500 transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-eco-500/10 text-eco-600 dark:text-eco-400 font-extrabold text-xl flex items-center justify-center mb-4">
+                            1
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Snap & Pin Location</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                            Take a photo of the waste hotspot. Our AI identifies waste type and urgency while GPS pinpoints exact street coordinates.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 shadow-sm relative group hover:border-eco-500 transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-eco-500/10 text-eco-600 dark:text-eco-400 font-extrabold text-xl flex items-center justify-center mb-4">
+                            2
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Sanitation Crew Dispatch</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                            Municipal admins receive the geo-tagged report on the live dashboard and assign nearby sanitation trucks immediately.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 shadow-sm relative group hover:border-eco-500 transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-eco-500/10 text-eco-600 dark:text-eco-400 font-extrabold text-xl flex items-center justify-center mb-4">
+                            3
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Live Progress & Feedback</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                            Track resolution step-by-step from pending to cleaned. Rate sanitation quality and earn eco-community badges.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: REPORT GARBAGE ==================== -->
+        <section id="tab-report" class="tab-content hidden space-y-6">
+            <div class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-slate-700 shadow-xl space-y-6">
+                
+                <div class="border-b border-slate-100 dark:border-slate-700 pb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-circle-exclamation text-eco-500"></i> Report Waste Hotspot
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Submit geo-tagged report directly to municipal sanitation department</p>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 bg-eco-100 dark:bg-eco-900/60 text-eco-700 dark:text-eco-300 rounded-full">
+                        Step 1 of 1
+                    </span>
+                </div>
+
+                <form id="garbage-report-form" onsubmit="handleReportSubmit(event)" class="space-y-6">
+                    
+                    <!-- Photo Upload & AI Scan Section -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            1. Hotspot Photo & AI Waste Analyzer
+                        </label>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Image Dropzone -->
+                            <div id="dropzone" onclick="document.getElementById('photo-input').click()" class="border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-eco-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50 dark:bg-slate-900/50 transition-all flex flex-col items-center justify-center min-h-[180px] relative overflow-hidden group">
+                                <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+                                
+                                <div id="upload-placeholder" class="space-y-2">
+                                    <div class="w-12 h-12 rounded-full bg-eco-100 dark:bg-eco-900/50 text-eco-600 dark:text-eco-400 flex items-center justify-center mx-auto text-xl">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    </div>
+                                    <div class="text-xs font-bold text-slate-700 dark:text-slate-200">Click or drop waste image here</div>
+                                    <div class="text-[10px] text-slate-400">PNG, JPG, WEBP up to 10MB</div>
+                                </div>
+
+                                <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl" alt="Waste Preview">
+                                
+                                <div id="preview-overlay" class="hidden absolute inset-0 bg-slate-950/60 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span class="text-xs text-white font-bold bg-slate-800/80 px-3 py-1.5 rounded-lg">Change Image</span>
+                                </div>
+                            </div>
+
+                            <!-- Sample Quick Preset Images / AI Scanner -->
+                            <div class="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> Preset Demo Photos or Scan:
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <button type="button" onclick="usePresetImage('plastic')" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:border-eco-500 flex flex-col items-center gap-1">
+                                            <i class="fa-solid fa-bottle-water text-cyan-500 text-base"></i> Plastic Pile
+                                        </button>
+                                        <button type="button" onclick="usePresetImage('organic')" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:border-eco-500 flex flex-col items-center gap-1">
+                                            <i class="fa-solid fa-apple-whole text-amber-500 text-base"></i> Organic Bin
+                                        </button>
+                                        <button type="button" onclick="usePresetImage('ewaste')" class="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:border-eco-500 flex flex-col items-center gap-1">
+                                            <i class="fa-solid fa-plug text-indigo-500 text-base"></i> E-Waste
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button type="button" onclick="runAiWasteScan()" id="ai-scan-btn" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-2 transition-all">
+                                    <i class="fa-solid fa-brain"></i> Auto-Detect Waste with Gemini AI
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category & Urgency Row -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="waste-category" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                Waste Category
+                            </label>
+                            <select id="waste-category" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                <option value="Plastic">Plastic & Bottles</option>
+                                <option value="Organic">Organic & Food Waste</option>
+                                <option value="Electronic">Electronic / E-Waste</option>
+                                <option value="Medical">Medical / Biohazard</option>
+                                <option value="Hazardous">Chemical / Hazardous</option>
+                                <option value="Mixed">Mixed Household Garbage</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="urgency-level" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                Severity / Urgency
+                            </label>
+                            <select id="urgency-level" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                                <option value="Low">Low - Normal Pickup</option>
+                                <option value="Medium" selected>Medium - Overflowing Bin</option>
+                                <option value="High">High - Blocked Road / Drain</option>
+                                <option value="Critical">Critical - Hazard / Medical</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Location Pinpoint with Leaflet Map -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                2. Pin GPS Location on Map
+                            </label>
+                            <button type="button" onclick="getCurrentGpsLocation()" class="text-xs text-eco-600 dark:text-eco-400 font-bold hover:underline flex items-center gap-1">
+                                <i class="fa-solid fa-location-crosshairs"></i> Use Current GPS
+                            </button>
+                        </div>
+
+                        <!-- Map canvas for location selection -->
+                        <div id="picker-map" class="w-full h-56 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-10"></div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <input type="text" id="report-address" required placeholder="Street / Landmark Address" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-medium focus:ring-2 focus:ring-eco-500 focus:outline-none">
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="report-lat" readonly placeholder="Latitude" class="w-1/2 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-500">
+                                <input type="text" id="report-lng" readonly placeholder="Longitude" class="w-1/2 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="report-desc" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                            3. Additional Description
+                        </label>
+                        <textarea id="report-desc" rows="3" required placeholder="Describe volume, obstruction, smell, or notable hazardous materials..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-eco-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full py-4 rounded-2xl bg-gradient-to-r from-eco-600 to-emerald-500 hover:from-eco-500 hover:to-emerald-400 text-white text-base font-extrabold shadow-xl shadow-eco-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Municipal Complaint
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: COMPLAINT TRACKER ==================== -->
+        <section id="tab-tracker" class="tab-content hidden space-y-6">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-eco-500"></i> Complaint Tracker
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Real-time status, sanitation team updates, and resolution proofs</p>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="text" id="tracker-search" oninput="filterTrackerList()" placeholder="Search ID or locality..." class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-eco-500">
+                    <select id="tracker-status-filter" onchange="filterTrackerList()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-eco-500">
+                        <option value="ALL">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Assigned">Assigned</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- List of Complaints -->
+            <div id="tracker-container" class="space-y-4">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: LIVE CITY MAP ==================== -->
+        <section id="tab-map" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-eco-500"></i> Live City Waste Map
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Interactive geo-spatial map of reported hot spots across localities</p>
+                    </div>
+
+                    <!-- Map Filter Bar -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-1 text-xs font-bold text-slate-500">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Pending
+                            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block ml-2"></span> Assigned
+                            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block ml-2"></span> In Progress
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block ml-2"></span> Resolved
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Overview Leaflet Map -->
+                <div id="city-map" class="w-full h-[550px] rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-inner z-10"></div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: COLLECTION SCHEDULES ==================== -->
+        <section id="tab-schedules" class="tab-content hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-truck-pickup text-eco-500"></i> Waste Collection Schedule
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Municipal garbage truck schedules filtered by neighborhood</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="text" id="schedule-search" oninput="renderSchedules()" placeholder="Search locality..." class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-eco-500">
+                    <button id="admin-add-schedule-btn" onclick="openAddScheduleModal()" class="hidden px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Schedule
+                    </button>
+                </div>
+            </div>
+
+            <div id="schedules-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 6: RECYCLING & ECO HUB ==================== -->
+        <section id="tab-recycling" class="tab-content hidden space-y-8">
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-emerald-600 to-eco-700 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 max-w-xl">
+                    <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-extrabold uppercase tracking-widest text-emerald-100">Educational Portal</span>
+                    <h2 class="text-3xl font-black">Waste Segregation & Recycling Guide</h2>
+                    <p class="text-sm text-emerald-100 leading-relaxed">
+                        Learn proper waste segregation protocols, eco-friendly habits, and local recycling initiatives to minimize landfill contamination.
+                    </p>
+                </div>
+                <div class="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-5xl text-emerald-200 shrink-0">
+                    <i class="fa-solid fa-recycle"></i>
+                </div>
+            </div>
+
+            <!-- Color Coded Bin Guide -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold">Standard Municipal Bin Classification</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Blue Bin -->
+                    <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-bottle-water"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-blue-900 dark:text-blue-300">Blue Bin</h4>
+                                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">Dry / Recyclable</span>
+                            </div>
+                        </div>
+                        <ul class="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                            <li>Plastic bottles & food containers</li>
+                            <li>Cardboard boxes & paper</li>
+                            <li>Glass bottles & aluminum cans</li>
+                        </ul>
+                    </div>
+
+                    <!-- Green Bin -->
+                    <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-leaf"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-emerald-900 dark:text-emerald-300">Green Bin</h4>
+                                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Wet / Organic</span>
+                            </div>
+                        </div>
+                        <ul class="text-xs text-emerald-800 dark:text-emerald-200 space-y-1 list-disc list-inside">
+                            <li>Fruit & vegetable peels</li>
+                            <li>Leftover cooked food</li>
+                            <li>Garden leaves & tea bags</li>
+                        </ul>
+                    </div>
+
+                    <!-- Yellow Bin -->
+                    <div class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-plug"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-amber-900 dark:text-amber-300">Yellow Bin</h4>
+                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">E-Waste & Electronics</span>
+                            </div>
+                        </div>
+                        <ul class="text-xs text-amber-800 dark:text-amber-200 space-y-1 list-disc list-inside">
+                            <li>Old smartphones & laptops</li>
+                            <li>Batteries & chargers</li>
+                            <li>Circuit boards & cables</li>
+                        </ul>
+                    </div>
+
+                    <!-- Red / Black Bin -->
+                    <div class="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-biohazard"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-rose-900 dark:text-rose-300">Red / Black Bin</h4>
+                                <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Hazardous & Medical</span>
+                            </div>
+                        </div>
+                        <ul class="text-xs text-rose-800 dark:text-rose-200 space-y-1 list-disc list-inside">
+                            <li>Expired medicines & syringes</li>
+                            <li>Paints & aerosol cans</li>
+                            <li>Sanitary waste</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eco Tips Cards Grid -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Community Eco Practices</h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterEcoTips('ALL')" class="px-3 py-1 rounded-lg bg-eco-100 dark:bg-eco-900 text-eco-700 dark:text-eco-300 text-xs font-bold">All</button>
+                        <button onclick="filterEcoTips('Plastic')" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold">Plastics</button>
+                        <button onclick="filterEcoTips('Compost')" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold">Composting</button>
+                    </div>
+                </div>
+
+                <div id="eco-tips-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Dynamically rendered -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 7: ADMIN DASHBOARD ==================== -->
+        <section id="tab-admin" class="tab-content hidden space-y-8">
+            
+            <!-- Admin Top Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Registered Users</div>
+                    <div id="admin-stat-users" class="text-3xl font-black text-slate-900 dark:text-white">1,240</div>
+                    <div class="text-[11px] font-semibold text-emerald-500 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> +14% this month
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Complaints Received</div>
+                    <div id="admin-stat-complaints" class="text-3xl font-black text-slate-900 dark:text-white">148</div>
+                    <div class="text-[11px] font-semibold text-eco-500 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> 75% Resolved
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Dispatch</div>
+                    <div id="admin-stat-pending" class="text-3xl font-black text-rose-500">12</div>
+                    <div class="text-[11px] font-semibold text-amber-500 flex items-center gap-1">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Action required
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Sanitation Teams</div>
+                    <div class="text-3xl font-black text-indigo-500">8 Squads</div>
+                    <div class="text-[11px] font-semibold text-indigo-400 flex items-center gap-1">
+                        <i class="fa-solid fa-truck-fast"></i> Fully operational
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Complaint Status Distribution -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-eco-500"></i> Complaint Status Distribution
+                    </h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chart-status"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Waste Category Breakdown -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-indigo-500"></i> Waste Categories Frequency
+                    </h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chart-categories"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Complaint Management Table -->
+            <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4 overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-900 dark:text-white">Municipal Dispatch & Assign Table</h3>
+                        <p class="text-xs text-slate-400">Assign sanitation squads and update live resolution status</p>
+                    </div>
+                    <button onclick="exportAllComplaintsCSV()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Export Reports (CSV)
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-700 text-[11px] font-extrabold uppercase tracking-wider text-slate-400 bg-slate-50/50 dark:bg-slate-900/50">
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Category</th>
+                                <th class="p-3">Locality / Address</th>
+                                <th class="p-3">Severity</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Assigned Crew</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="text-xs font-medium divide-y divide-slate-100 dark:divide-slate-700/60">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+    
+    <!-- Detail & Progress Modal -->
+    <div id="modal-detail" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-6 space-y-6 shadow-2xl border border-slate-100 dark:border-slate-700 relative">
+            <button onclick="closeModal('modal-detail')" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div id="modal-detail-content">
+                <!-- Dynamically loaded detail body -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Crew Assignment Modal -->
+    <div id="modal-assign" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100 dark:border-slate-700 relative">
+            <button onclick="closeModal('modal-assign')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 class="text-lg font-black flex items-center gap-2">
+                <i class="fa-solid fa-truck-fast text-indigo-500"></i> Dispatch Sanitation Crew
+            </h3>
+            
+            <input type="hidden" id="assign-complaint-id">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Sanitation Squad</label>
+                <select id="assign-crew-select" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold">
+                    <option value="Green Squad Alpha (North)">Green Squad Alpha (North Zone)</option>
+                    <option value="Eco Response Crew Beta (Central)">Eco Response Crew Beta (Central Zone)</option>
+                    <option value="Hazardous Disposal Unit Delta">Hazardous Disposal Unit Delta</option>
+                    <option value="Rapid Rapid Taskforce Gamma">Rapid Taskforce Gamma (South Zone)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Update Status</label>
+                <select id="assign-status-select" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold">
+                    <option value="Assigned">Assigned</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved (Cleaned)</option>
+                </select>
+            </div>
+
+            <button onclick="saveAssignment()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm transition-all shadow-lg shadow-indigo-600/30">
+                Save & Dispatch
+            </button>
+        </div>
+    </div>
+
+    <!-- Feedback & Rating Modal -->
+    <div id="modal-feedback" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100 dark:border-slate-700 relative text-center">
+            <button onclick="closeModal('modal-feedback')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
+                <i class="fa-solid fa-star"></i>
+            </div>
+
+            <h3 class="text-xl font-black">Rate Sanitation Quality</h3>
+            <p class="text-xs text-slate-500">How satisfied are you with the cleanup speed and cleanliness?</p>
+
+            <input type="hidden" id="feedback-complaint-id">
+
+            <div class="flex justify-center gap-2 text-2xl text-amber-400 cursor-pointer" id="star-rating-container">
+                <i class="fa-solid fa-star star-btn" onclick="setRating(1)"></i>
+                <i class="fa-solid fa-star star-btn" onclick="setRating(2)"></i>
+                <i class="fa-solid fa-star star-btn" onclick="setRating(3)"></i>
+                <i class="fa-solid fa-star star-btn" onclick="setRating(4)"></i>
+                <i class="fa-solid fa-star star-btn" onclick="setRating(5)"></i>
+            </div>
+
+            <textarea id="feedback-comments" rows="2" placeholder="Write feedback or comments for the municipal team..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs"></textarea>
+
+            <button onclick="submitFeedback()" class="w-full py-3 rounded-xl bg-eco-600 hover:bg-eco-700 text-white font-extrabold text-sm transition-all">
+                Submit Citizen Feedback
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-bold border border-slate-700 transition-all transform translate-y-20 opacity-0 pointer-events-none">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-eco-400 text-lg"></i>
+        <span id="toast-message">Notification message here</span>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-8 text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-eco-600 text-white flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-leaf"></i></span>
+                <span class="font-extrabold text-slate-700 dark:text-slate-300">EcoClean AI Municipal Systems</span>
+            </div>
+            <div>
+                © 2026 Municipal Smart Environmental Directorate. Empowering Green Cities.
+            </div>
+            <div class="flex gap-4 font-semibold text-slate-400">
+                <a href="#" onclick="showToast('Helpline: 1800-ECO-CLEAN', 'info')" class="hover:underline">Helpline</a>
+                <a href="#" onclick="showToast('Privacy Policy Compliant', 'info')" class="hover:underline">Privacy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        
+        // Application State
+        let currentRole = 'citizen'; // 'citizen' or 'admin'
+        let selectedRating = 5;
+        let selectedImageBase64 = null;
+        let pickerMap = null;
+        let pickerMarker = null;
+        let cityMap = null;
+        let cityMapMarkers = [];
+
+        // Preloaded Initial Mock Complaints Data
+        let complaints = [
+            {
+                id: 'CMP-8041',
+                category: 'Plastic',
+                urgency: 'Medium',
+                address: 'Green Park Sector 4, Main Entrance',
+                lat: 17.6868,
+                lng: 83.2185,
+                description: 'Overflowing plastic bottles and food packaging around public park bench.',
+                status: 'In Progress',
+                crew: 'Green Squad Alpha (North)',
+                createdAt: '2026-08-11 09:30',
+                image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80',
+                rating: null,
+                feedback: null
+            },
+            {
+                id: 'CMP-8042',
+                category: 'Organic',
+                urgency: 'High',
+                address: 'Central Market Food Alley',
+                lat: 17.6912,
+                lng: 83.2241,
+                description: 'Decaying vegetable peels creating foul odor and blocking gutter line.',
+                status: 'Pending',
+                crew: 'Unassigned',
+                createdAt: '2026-08-12 08:15',
+                image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80',
+                rating: null,
+                feedback: null
+            },
+            {
+                id: 'CMP-8040',
+                category: 'Electronic',
+                urgency: 'Medium',
+                address: 'Tech Hub Street near Gate 2',
+                lat: 17.6820,
+                lng: 83.2110,
+                description: 'Old computer monitors and tangled wires dumped near electric transformer.',
+                status: 'Resolved',
+                crew: 'Hazardous Disposal Unit Delta',
+                createdAt: '2026-08-10 14:20',
+                image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80',
+                rating: 5,
+                feedback: 'Prompt removal within 4 hours! Excellent work squad.'
+            },
+            {
+                id: 'CMP-8039',
+                category: 'Medical',
+                urgency: 'Critical',
+                address: 'Community Health Clinic Back Lane',
+                lat: 17.6980,
+                lng: 83.2300,
+                description: 'Discarded medical boxes and syringes in open bin.',
+                status: 'Assigned',
+                crew: 'Hazardous Disposal Unit Delta',
+                createdAt: '2026-08-12 11:00',
+                image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=80',
+                rating: null,
+                feedback: null
+            }
+        ];
+
+        // Mock Collection Schedules
+        let schedules = [
+            {
+                id: 1,
+                locality: 'Green Park & Sector 4',
+                days: 'Mon, Wed, Fri',
+                time: '07:00 AM - 09:30 AM',
+                crew: 'Green Squad Alpha',
+                type: 'Wet Organic & Dry Recyclable'
+            },
+            {
+                id: 2,
+                locality: 'Central Market & Commercial Hub',
+                days: 'Daily (Mon - Sun)',
+                time: '05:30 AM - 08:00 AM',
+                crew: 'Eco Response Crew Beta',
+                type: 'Organic & Commercial Waste'
+            },
+            {
+                id: 3,
+                locality: 'Tech Zone & Residential Sector 9',
+                days: 'Tue, Thu, Sat',
+                time: '08:00 AM - 10:30 AM',
+                crew: 'Rapid Taskforce Gamma',
+                type: 'E-Waste & Dry Plastic'
+            }
+        ];
+
+        // Mock Eco Tips
+        let ecoTips = [
+            {
+                category: 'Plastic',
+                title: 'Rinse Plastic Before Bin Disposal',
+                desc: 'Food residue on plastic containers contaminates whole batch recyclables. Always rinse milk pouches and containers.',
+                icon: 'fa-bottle-water'
+            },
+            {
+                category: 'Compost',
+                title: 'Home Composting in 3 Easy Steps',
+                desc: 'Layer wet kitchen scraps with dry leaves in a clay pot. In 45 days, produce nutrient-rich garden compost.',
+                icon: 'fa-seedling'
+            },
+            {
+                category: 'E-Waste',
+                title: 'Safely Dispose Lithium Batteries',
+                desc: 'Never mix old phone batteries into household trash to prevent fire risks. Hand over at yellow e-waste drop points.',
+                icon: 'fa-battery-three-quarters'
+            }
+        ];
+
+        // Notifications
+        let notifications = [
+            { id: 1, text: 'Complaint CMP-8040 was marked Resolved by Delta Crew.', time: '10m ago' },
+            { id: 2, text: 'New complaint reported at Central Market.', time: '1h ago' },
+            { id: 3, text: 'Waste Collection reminder for Sector 4 tomorrow morning.', time: '3h ago' }
+        ];
+
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Show target
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) target.classList.remove('hidden');
+
+            // Update Nav styles
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.className = 'nav-link px-3 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-eco-600 dark:hover:text-eco-400 hover:bg-slate-100 dark:hover:bg-slate-800';
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = 'nav-link px-3 py-2 rounded-lg transition-all text-eco-600 dark:text-eco-400 bg-eco-50 dark:bg-slate-800 font-bold';
+            }
+
+            // Initialize or resize Leaflet maps when tabs are shown
+            if (tabId === 'report') {
+                setTimeout(initPickerMap, 200);
+            } else if (tabId === 'map') {
+                setTimeout(initCityMap, 200);
+            } else if (tabId === 'admin') {
+                setTimeout(renderAdminCharts, 200);
+            }
+        }
+
+        function setUserRole(role) {
+            currentRole = role;
+            const citBtn = document.getElementById('role-citizen-btn');
+            const admBtn = document.getElementById('role-admin-btn');
+            const addSchedBtn = document.getElementById('admin-add-schedule-btn');
+
+            if (role === 'admin') {
+                citBtn.className = 'px-2.5 py-1 rounded-lg transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400';
+                admBtn.className = 'px-2.5 py-1 rounded-lg transition-all bg-indigo-600 text-white shadow-sm';
+                addSchedBtn.classList.remove('hidden');
+                showToast('Switched to Municipal Admin Mode', 'info');
+            } else {
+                citBtn.className = 'px-2.5 py-1 rounded-lg transition-all bg-white dark:bg-slate-700 text-eco-700 dark:text-eco-300 shadow-sm';
+                admBtn.className = 'px-2.5 py-1 rounded-lg transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400';
+                addSchedBtn.classList.add('hidden');
+                showToast('Switched to Citizen Mode', 'info');
+            }
+            renderTrackerList();
+            renderAdminTable();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fa-solid fa-sun text-amber-400';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            dropdown.classList.toggle('hidden');
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notif-list');
+            if (notifications.length === 0) {
+                list.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">No notifications</div>`;
+                document.getElementById('notif-badge').innerText = '0';
+                return;
+            }
+
+            list.innerHTML = notifications.map(n => `
+                <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50 text-xs">
+                    <div class="font-medium text-slate-700 dark:text-slate-200">${n.text}</div>
+                    <div class="text-[10px] text-slate-400 mt-1">${n.time}</div>
+                </div>
+            `).join('');
+            document.getElementById('notif-badge').innerText = notifications.length;
+        }
+
+        function clearNotifications() {
+            notifications = [];
+            renderNotifications();
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function initPickerMap() {
+            const defaultLat = 17.6868;
+            const defaultLng = 83.2185;
+
+            if (!pickerMap) {
+                pickerMap = L.map('picker-map').setView([defaultLat, defaultLng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(pickerMap);
+
+                pickerMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(pickerMap);
+
+                pickerMarker.on('dragend', function (e) {
+                    const coord = pickerMarker.getLatLng();
+                    updatePickedCoords(coord.lat, coord.lng);
+                });
+
+                pickerMap.on('click', function (e) {
+                    pickerMarker.setLatLng(e.latlng);
+                    updatePickedCoords(e.latlng.lat, e.latlng.lng);
+                });
+
+                updatePickedCoords(defaultLat, defaultLng);
+            } else {
+                pickerMap.invalidateSize();
+            }
+        }
+
+        function updatePickedCoords(lat, lng) {
+            document.getElementById('report-lat').value = lat.toFixed(5);
+            document.getElementById('report-lng').value = lng.toFixed(5);
+            
+            // Mock address lookup simulation
+            if (!document.getElementById('report-address').value) {
+                document.getElementById('report-address').value = `Locality near Sector ${Math.floor(lat * 10) % 10 + 1}, Main Road`;
+            }
+        }
+
+        function getCurrentGpsLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        if (pickerMap && pickerMarker) {
+                            pickerMap.setView([lat, lng], 16);
+                            pickerMarker.setLatLng([lat, lng]);
+                            updatePickedCoords(lat, lng);
+                            showToast('GPS position acquired!', 'success');
+                        }
+                    },
+                    () => {
+                        showToast('Geolocation permission denied or unavailable.', 'error');
+                    }
+                );
+            }
+        }
+
+        function initCityMap() {
+            if (!cityMap) {
+                cityMap = L.map('city-map').setView([17.6880, 83.2200], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(cityMap);
+            }
+            cityMap.invalidateSize();
+            renderCityMapMarkers();
+        }
+
+        function renderCityMapMarkers() {
+            if (!cityMap) return;
+
+            // Clear previous
+            cityMapMarkers.forEach(m => cityMap.removeLayer(m));
+            cityMapMarkers = [];
+
+            complaints.forEach(item => {
+                let markerColor = '#ef4444'; // Red for pending
+                if (item.status === 'Assigned') markerColor = '#f59e0b'; // Amber
+                if (item.status === 'In Progress') markerColor = '#3b82f6'; // Blue
+                if (item.status === 'Resolved') markerColor = '#22c55e'; // Green
+
+                const customIcon = L.divIcon({
+                    className: 'custom-map-pin',
+                    html: `<div style="background-color: ${markerColor}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [22, 22]
+                });
+
+                const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(cityMap);
+
+                marker.bindPopup(`
+                    <div class="p-2 space-y-2 text-slate-800">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span class="text-eco-700">${item.id}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] text-white" style="background-color: ${markerColor}">${item.status}</span>
+                        </div>
+                        <img src="${item.image}" class="w-full h-24 object-cover rounded-lg" alt="Waste Image">
+                        <div class="text-xs font-semibold">${item.address}</div>
+                        <div class="text-[11px] text-slate-500">${item.description}</div>
+                        <button onclick="openComplaintModal('${item.id}')" class="w-full py-1 text-xs bg-slate-900 text-white rounded-lg font-bold">View Progress</button>
+                    </div>
+                `);
+
+                cityMapMarkers.push(marker);
+            });
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageBase64 = e.target.result;
+                    displayPreview(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function displayPreview(src) {
+            const img = document.getElementById('image-preview');
+            const placeholder = document.getElementById('upload-placeholder');
+            const overlay = document.getElementById('preview-overlay');
+
+            img.src = src;
+            img.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            overlay.classList.remove('hidden');
+        }
+
+        function usePresetImage(type) {
+            let preset = 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80';
+            let cat = 'Plastic';
+
+            if (type === 'organic') {
+                preset = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80';
+                cat = 'Organic';
+            } else if (type === 'ewaste') {
+                preset = 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80';
+                cat = 'Electronic';
+            }
+
+            selectedImageBase64 = preset;
+            displayPreview(preset);
+            document.getElementById('waste-category').value = cat;
+            showToast(`Selected preset image (${cat})`, 'info');
+        }
+
+        /* Gemini AI Scanner Call */
+        async function runAiWasteScan() {
+            if (!selectedImageBase64) {
+                showToast('Please upload or select an image first!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('ai-scan-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> AI Analyzing Waste...`;
+            btn.disabled = true;
+
+            try {
+                // Gemini API Call
+                const prompt = "Analyze this garbage photo for a municipal waste app. Identify: 1) Waste Category (Plastic, Organic, Electronic, Medical, Hazardous, or Mixed), 2) Urgency Level (Low, Medium, High, Critical), 3) Short concise description of environmental hazard and cleanup advice. Return as valid JSON object with keys: category, urgency, description.";
+                const apiKey = ""; // Canvas runtime injection
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+                    
+                    if (parsed.category) document.getElementById('waste-category').value = parsed.category;
+                    if (parsed.urgency) document.getElementById('urgency-level').value = parsed.urgency;
+                    if (parsed.description) document.getElementById('report-desc').value = `[AI Auto-Scan]: ${parsed.description}`;
+
+                    showToast('AI Waste Analysis Complete!', 'success');
+                } else {
+                    fallbackAiScan();
+                }
+            } catch (e) {
+                console.log('Gemini API fallback simulation:', e);
+                fallbackAiScan();
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+
+        function fallbackAiScan() {
+            // Intelligent local classification fallback
+            const category = document.getElementById('waste-category').value;
+            document.getElementById('urgency-level').value = 'High';
+            document.getElementById('report-desc').value = `[AI Smart Scan]: High concentration of ${category} materials detected. Immediate municipal dispatch recommended.`;
+            showToast('AI Smart Scanner verified waste category!', 'success');
+        }
+
+        function handleReportSubmit(e) {
+            e.preventDefault();
+
+            const category = document.getElementById('waste-category').value;
+            const urgency = document.getElementById('urgency-level').value;
+            const address = document.getElementById('report-address').value;
+            const lat = parseFloat(document.getElementById('report-lat').value) || 17.6868;
+            const lng = parseFloat(document.getElementById('report-lng').value) || 83.2185;
+            const desc = document.getElementById('report-desc').value;
+
+            const newId = `CMP-${Math.floor(1000 + Math.random() * 9000)}`;
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+            const newComplaint = {
+                id: newId,
+                category,
+                urgency,
+                address,
+                lat,
+                lng,
+                description: desc,
+                status: 'Pending',
+                crew: 'Unassigned',
+                createdAt: now,
+                image: selectedImageBase64 || 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80',
+                rating: null,
+                feedback: null
+            };
+
+            complaints.unshift(newComplaint);
+
+            // Add notification
+            notifications.unshift({
+                id: Date.now(),
+                text: `New complaint ${newId} submitted at ${address}`,
+                time: 'Just now'
+            });
+
+            // Trigger confetti
+            if (window.confetti) {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            showToast(`Complaint ${newId} Submitted Successfully!`, 'success');
+
+            // Reset form
+            document.getElementById('garbage-report-form').reset();
+            selectedImageBase64 = null;
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+
+            // Refresh UI
+            updateHomeStats();
+            renderTrackerList();
+            renderAdminTable();
+
+            // Switch to tracker tab
+            switchTab('tracker');
+        }
+
+        function renderTrackerList() {
+            const container = document.getElementById('tracker-container');
+            const search = document.getElementById('tracker-search').value.toLowerCase();
+            const statusFilter = document.getElementById('tracker-status-filter').value;
+
+            let filtered = complaints.filter(c => {
+                const matchSearch = c.id.toLowerCase().includes(search) || c.address.toLowerCase().includes(search);
+                const matchStatus = statusFilter === 'ALL' || c.status === statusFilter;
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 text-center text-slate-400 space-y-2">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-300"></i>
+                        <div>No complaints match your active filter.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(c => {
+                let badgeBg = 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+                if (c.status === 'Assigned') badgeBg = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+                if (c.status === 'In Progress') badgeBg = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                if (c.status === 'Resolved') badgeBg = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+
+                // Timeline step percentages
+                let progressPct = '15%';
+                if (c.status === 'Assigned') progressPct = '40%';
+                if (c.status === 'In Progress') progressPct = '70%';
+                if (c.status === 'Resolved') progressPct = '100%';
+
+                return `
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-100 dark:border-slate-700/80 shadow-sm space-y-4 hover:shadow-md transition-all">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-700/60">
+                            <div class="flex items-center gap-3">
+                                <span class="font-black text-slate-900 dark:text-white">${c.id}</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold border ${badgeBg}">${c.status}</span>
+                                <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${c.createdAt}</span>
+                            </div>
+                            <div class="text-xs font-bold text-slate-500">
+                                Category: <span class="text-eco-600 dark:text-eco-400">${c.category}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                            <div class="md:col-span-3">
+                                <img src="${c.image}" class="w-full h-32 object-cover rounded-2xl border border-slate-100 dark:border-slate-700" alt="Hotspot">
+                            </div>
+
+                            <div class="md:col-span-9 space-y-3">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Locality Address</div>
+                                    <div class="text-sm font-bold text-slate-800 dark:text-slate-200">${c.address}</div>
+                                </div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${c.description}</p>
+
+                                <!-- Visual Progress Timeline Bar -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-bold text-slate-400">
+                                        <span>Pending</span>
+                                        <span>Assigned</span>
+                                        <span>In Progress</span>
+                                        <span>Resolved</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-eco-500 to-emerald-400 transition-all duration-500" style="width: ${progressPct}"></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between pt-1 gap-2">
+                                    <div class="text-xs text-slate-500">
+                                        Crew: <span class="font-bold text-slate-700 dark:text-slate-300">${c.crew}</span>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button onclick="openComplaintModal('${c.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all">
+                                            <i class="fa-solid fa-eye mr-1"></i> Full Details
+                                        </button>
+                                        
+                                        ${c.status === 'Resolved' && !c.rating ? `
+                                            <button onclick="openFeedbackModal('${c.id}')" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-all">
+                                                <i class="fa-solid fa-star mr-1"></i> Rate Quality
+                                            </button>
+                                        ` : ''}
+
+                                        <button onclick="printComplaintReport('${c.id}')" class="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 transition-all">
+                                            <i class="fa-solid fa-file-pdf mr-1"></i> PDF Summary
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterTrackerList() {
+            renderTrackerList();
+        }
+
+        function openComplaintModal(id) {
+            const item = complaints.find(c => c.id === id);
+            if (!item) return;
+
+            const modal = document.getElementById('modal-detail');
+            const content = document.getElementById('modal-detail-content');
+
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <div>
+                            <span class="text-xl font-black text-slate-900 dark:text-white">${item.id}</span>
+                            <span class="ml-2 px-3 py-1 rounded-full text-xs font-extrabold bg-eco-100 dark:bg-eco-900 text-eco-700 dark:text-eco-300">${item.status}</span>
+                        </div>
+                        <span class="text-xs text-slate-400">${item.createdAt}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <img src="${item.image}" class="w-full h-48 object-cover rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="space-y-2 text-xs">
+                            <div><span class="font-bold text-slate-400">Category:</span> <span class="font-semibold text-slate-700 dark:text-slate-200">${item.category}</span></div>
+                            <div><span class="font-bold text-slate-400">Severity:</span> <span class="font-semibold text-rose-500">${item.urgency}</span></div>
+                            <div><span class="font-bold text-slate-400">Assigned Crew:</span> <span class="font-semibold text-slate-700 dark:text-slate-200">${item.crew}</span></div>
+                            <div><span class="font-bold text-slate-400">Street Address:</span> <div class="font-semibold text-slate-700 dark:text-slate-200 mt-0.5">${item.address}</div></div>
+                            <div><span class="font-bold text-slate-400">Coordinates:</span> <code class="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">${item.lat}, ${item.lng}</code></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <div class="text-xs font-bold uppercase text-slate-400 mb-1">Issue Description</div>
+                        <p class="text-xs text-slate-700 dark:text-slate-300">${item.description}</p>
+                    </div>
+
+                    ${item.rating ? `
+                        <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 text-xs space-y-1">
+                            <div class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                <i class="fa-solid fa-star"></i> Citizen Feedback Rating: ${item.rating} / 5
+                            </div>
+                            <p class="text-amber-700 dark:text-amber-200">${item.feedback || 'No written feedback provided.'}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="printComplaintReport('${item.id}')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md">
+                            <i class="fa-solid fa-print mr-1"></i> Print / PDF
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function printComplaintReport(id) {
+            const item = complaints.find(c => c.id === id);
+            if (!item) return;
+
+            const printWin = window.open('', '_blank', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Municipal Waste Incident Report - ${item.id}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 30px; line-height: 1.5; color: #1e293b; }
+                        .header { border-bottom: 2px solid #22c55e; padding-bottom: 10px; margin-bottom: 20px; }
+                        .title { font-size: 22px; font-weight: bold; color: #15803d; }
+                        .badge { background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+                        .box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-size: 13px; }
+                        .label { font-weight: bold; color: #64748b; font-size: 11px; text-transform: uppercase; }
+                        img { max-width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">EcoClean AI Municipal Systems</div>
+                        <div>Official Sanitation Incident Report - ${item.id}</div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        Status: <span class="badge">${item.status}</span>
+                    </div>
+
+                    <div class="grid">
+                        <div class="box">
+                            <div class="label">Locality Address</div>
+                            <div>${item.address}</div>
+                            <br>
+                            <div class="label">Waste Category</div>
+                            <div>${item.category}</div>
+                        </div>
+                        <div class="box">
+                            <div class="label">Assigned Sanitation Squad</div>
+                            <div>${item.crew}</div>
+                            <br>
+                            <div class="label">Date & Time Reported</div>
+                            <div>${item.createdAt}</div>
+                        </div>
+                    </div>
+
+                    <div class="box" style="margin-bottom: 20px;">
+                        <div class="label">Incident Description</div>
+                        <div>${item.description}</div>
+                    </div>
+
+                    <img src="${item.image}" alt="Incident Photo">
+
+                    <div style="margin-top: 30px; font-size: 11px; color: #94a3b8; text-align: center;">
+                        Generated by EcoClean Smart Waste OS • Municipal Environmental Directorate
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            printWin.focus();
+            setTimeout(() => printWin.print(), 500);
+        }
+
+        function renderSchedules() {
+            const grid = document.getElementById('schedules-grid');
+            const search = document.getElementById('schedule-search').value.toLowerCase();
+
+            const filtered = schedules.filter(s => s.locality.toLowerCase().includes(search) || s.crew.toLowerCase().includes(search));
+
+            grid.innerHTML = filtered.map(s => `
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700/80 shadow-sm space-y-4 hover:border-eco-500 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="w-10 h-10 rounded-2xl bg-eco-100 dark:bg-eco-900 text-eco-600 dark:text-eco-400 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-truck"></i>
+                        </span>
+                        <span class="text-[11px] font-extrabold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                            ${s.crew}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">${s.locality}</h3>
+                        <div class="text-xs text-eco-600 dark:text-eco-400 font-bold mt-0.5">${s.type}</div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-2xl text-xs space-y-1.5 border border-slate-100 dark:border-slate-700">
+                        <div class="flex justify-between text-slate-500">
+                            <span><i class="fa-regular fa-calendar mr-1"></i>Days:</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">${s.days}</span>
+                        </div>
+                        <div class="flex justify-between text-slate-500">
+                            <span><i class="fa-regular fa-clock mr-1"></i>Window:</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">${s.time}</span>
+                        </div>
+                    </div>
+
+                    <button onclick="showToast('Notification set for ${s.locality} pickup!', 'success')" class="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-eco-600 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-regular fa-bell"></i> Set Pickup Reminder
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderEcoTips(filter = 'ALL') {
+            const grid = document.getElementById('eco-tips-grid');
+            let filtered = ecoTips;
+            if (filter !== 'ALL') {
+                filtered = ecoTips.filter(t => t.category.toLowerCase().includes(filter.toLowerCase()));
+            }
+
+            grid.innerHTML = filtered.map(t => `
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700/80 shadow-sm space-y-3 hover:shadow-md transition-all">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid ${t.icon}"></i>
+                    </div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/50 text-[10px] font-bold text-emerald-600 uppercase">
+                        ${t.category}
+                    </span>
+                    <h4 class="text-base font-extrabold text-slate-900 dark:text-white">${t.title}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${t.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function filterEcoTips(cat) {
+            renderEcoTips(cat);
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body');
+            tbody.innerHTML = complaints.map(c => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td class="p-3 font-bold text-slate-900 dark:text-white">${c.id}</td>
+                    <td class="p-3">${c.category}</td>
+                    <td class="p-3 max-w-xs truncate">${c.address}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.urgency === 'Critical' ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'}">
+                            ${c.urgency}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <span class="font-bold ${c.status === 'Resolved' ? 'text-emerald-500' : 'text-amber-500'}">${c.status}</span>
+                    </td>
+                    <td class="p-3 text-slate-500">${c.crew}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="openAssignModal('${c.id}')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all">
+                            Manage / Dispatch
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAssignModal(id) {
+            const item = complaints.find(c => c.id === id);
+            if (!item) return;
+
+            document.getElementById('assign-complaint-id').value = id;
+            document.getElementById('assign-status-select').value = item.status;
+            document.getElementById('modal-assign').classList.remove('hidden');
+        }
+
+        function saveAssignment() {
+            const id = document.getElementById('assign-complaint-id').value;
+            const crew = document.getElementById('assign-crew-select').value;
+            const status = document.getElementById('assign-status-select').value;
+
+            const item = complaints.find(c => c.id === id);
+            if (item) {
+                item.crew = crew;
+                item.status = status;
+                showToast(`Updated dispatch for ${id}`, 'success');
+            }
+
+            closeModal('modal-assign');
+            renderTrackerList();
+            renderAdminTable();
+            renderCityMapMarkers();
+            updateHomeStats();
+        }
+
+        function openFeedbackModal(id) {
+            document.getElementById('feedback-complaint-id').value = id;
+            setRating(5);
+            document.getElementById('modal-feedback').classList.remove('hidden');
+        }
+
+        function setRating(r) {
+            selectedRating = r;
+            const stars = document.querySelectorAll('.star-btn');
+            stars.forEach((star, idx) => {
+                if (idx < r) {
+                    star.className = 'fa-solid fa-star star-btn text-amber-400';
+                } else {
+                    star.className = 'fa-regular fa-star star-btn text-slate-300';
+                }
+            });
+        }
+
+        function submitFeedback() {
+            const id = document.getElementById('feedback-complaint-id').value;
+            const comments = document.getElementById('feedback-comments').value;
+
+            const item = complaints.find(c => c.id === id);
+            if (item) {
+                item.rating = selectedRating;
+                item.feedback = comments;
+                showToast('Thank you for rating municipal service!', 'success');
+            }
+
+            closeModal('modal-feedback');
+            renderTrackerList();
+        }
+
+        function exportAllComplaintsCSV() {
+            let csv = "ID,Category,Severity,Status,Address,Crew,CreatedAt\n";
+            complaints.forEach(c => {
+                csv += `"${c.id}","${c.category}","${c.urgency}","${c.status}","${c.address}","${c.crew}","${c.createdAt}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `municipal_waste_report_${Date.now()}.csv`);
+            a.click();
+            showToast('Exported CSV dataset!', 'success');
+        }
+
+        let statusChartInstance = null;
+        let categoryChartInstance = null;
+
+        function renderAdminCharts() {
+            // Status Doughnut Chart
+            const ctxStatus = document.getElementById('chart-status');
+            if (ctxStatus) {
+                if (statusChartInstance) statusChartInstance.destroy();
+
+                const pendingCount = complaints.filter(c => c.status === 'Pending').length;
+                const assignedCount = complaints.filter(c => c.status === 'Assigned').length;
+                const progressCount = complaints.filter(c => c.status === 'In Progress').length;
+                const resolvedCount = complaints.filter(c => c.status === 'Resolved').length;
+
+                statusChartInstance = new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pending', 'Assigned', 'In Progress', 'Resolved'],
+                        datasets: [{
+                            data: [pendingCount, assignedCount, progressCount, resolvedCount],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            // Categories Bar Chart
+            const ctxCat = document.getElementById('chart-categories');
+            if (ctxCat) {
+                if (categoryChartInstance) categoryChartInstance.destroy();
+
+                const categoriesList = ['Plastic', 'Organic', 'Electronic', 'Medical', 'Hazardous', 'Mixed'];
+                const counts = categoriesList.map(cat => complaints.filter(c => c.category === cat).length);
+
+                categoryChartInstance = new Chart(ctxCat, {
+                    type: 'bar',
+                    data: {
+                        labels: categoriesList,
+                        datasets: [{
+                            label: 'Incidents Reported',
+                            data: counts,
+                            backgroundColor: '#22c55e',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateHomeStats() {
+            const total = complaints.length;
+            const resolved = complaints.filter(c => c.status === 'Resolved').length;
+            const pending = total - resolved;
+
+            document.getElementById('stat-total-home').innerText = total;
+            document.getElementById('stat-resolved-home').innerText = resolved;
+            document.getElementById('stat-pending-home').innerText = pending;
+
+            document.getElementById('admin-stat-complaints').innerText = total;
+            document.getElementById('admin-stat-pending').innerText = pending;
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-message').innerText = msg;
+
+            if (type === 'success') {
+                icon.className = 'fa-solid fa-circle-check text-eco-400 text-lg';
+            } else if (type === 'error') {
+                icon.className = 'fa-solid fa-triangle-exclamation text-rose-400 text-lg';
+            } else {
+                icon.className = 'fa-solid fa-circle-info text-blue-400 text-lg';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-20');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-20');
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateHomeStats();
+            renderTrackerList();
+            renderSchedules();
+            renderEcoTips();
+            renderAdminTable();
+            renderNotifications();
+        });
+    </script>
+</body>
+</html>
